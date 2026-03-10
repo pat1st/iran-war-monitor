@@ -133,6 +133,10 @@
       border: 1px solid #30363d;
       transition: border-color .2s;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .card:hover { border-color: #58a6ff; }
     .card.active { border-color: #f85149 !important; }
@@ -506,7 +510,7 @@ function renderArticles(articles) {
     const adCard = (i > 0 && i % AD_EVERY_N === 0) ? makeAdCard() : "";
     return adCard + `
     <div class="col-12 col-md-6 col-xl-4 article-card">
-      <div class="card h-100" data-idx="${i}" onclick="openArticle(this)">
+      <div class="card h-100" data-idx="${i}">
         <div class="card-body d-flex flex-column gap-2">
           <h6 class="card-title mb-0"><span>${escHtml(a.title)}</span></h6>
           ${a.summary ? `<p class="card-text meta-text mb-0">${escHtml(a.summary)}…</p>` : ""}
@@ -578,6 +582,12 @@ function filterArticles() {
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
+// Delegated tap/click handler — reliable on iOS/Android unlike inline onclick
+document.getElementById("articles-grid").addEventListener("click", function(e) {
+  const card = e.target.closest(".card[data-idx]");
+  if (card) openArticle(card);
+});
+
 (function init() {
   const sel = document.getElementById("lang-select");
   sel.value = currentLang;

@@ -22,7 +22,7 @@ MONETISATION = {
     "adsense_slot_banner":  os.environ.get("ADSENSE_SLOT_BANNER", ""),
     "adsense_slot_infeed":  os.environ.get("ADSENSE_SLOT_INFEED", ""),
     # VPN affiliate link — sign up at nordvpn.com/affiliates or similar
-    "vpn_affiliate_url":    os.environ.get("VPN_AFFILIATE_URL", "https://nordvpn.com"),
+    "vpn_affiliate_url":    os.environ.get("VPN_AFFILIATE_URL", ""),
     "vpn_affiliate_label":  os.environ.get("VPN_AFFILIATE_LABEL", "Stay private — try NordVPN"),
     # Buy Me a Coffee — your username at buymeacoffee.com
     "bmac_username":        os.environ.get("BMAC_USERNAME", ""),
