@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iran War – Latest News</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    /* ── Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { background: #0d1117; color: #c9d1d9; margin: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .navbar { background: #161b22 !important; border-bottom: 1px solid #30363d; z-index: 200; flex-shrink: 0; }
+    .navbar-brand { color: #f85149 !important; font-weight: 700; letter-spacing: 1px; }
+
+    /* ── Search bar ───────────────────────────────────────── */
+    #search-bar { flex-shrink: 0; padding: .65rem 1rem; background: #0d1117; border-bottom: 1px solid #30363d; }
+
+    /* ── Split layout ─────────────────────────────────────── */
+    #layout {
+      flex: 1 1 auto;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #feed-panel {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 1rem 1rem 4rem;
+      min-width: 0;
+    }
+    #sidebar {
+      flex: 0 0 0;
+      width: 0;
+      overflow: hidden;
+      border-left: 2px solid #30363d;
+      background: #161b22;
+      display: flex;
+      flex-direction: column;
+      transition: flex-basis .28s ease, width .28s ease;
+    }
+    #sidebar.open {
+      flex: 0 0 48%;
+      width: 48%;
+    }
+    @media (max-width: 768px) {
+      html, body { height: auto; overflow: auto; }
+      #layout { flex-direction: column; overflow: visible; }
+      #feed-panel { overflow-y: visible; }
+      #sidebar { flex: none !important; width: 100% !important; max-height: 0; border-left: none; border-top: 2px solid #30363d; transition: max-height .3s ease; }
+      #sidebar.open { max-height: 80vh; }
+    }
+
+    /* ── Sidebar internals ────────────────────────────────── */
+    #sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem .75rem;
+      background: #0d1117;
+      border-bottom: 1px solid #30363d;
+      min-height: 42px;
+      flex-shrink: 0;
+    }
+    #sidebar-title {
+      flex: 1;
+      font-size: .82rem;
+      color: #8b949e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #sidebar-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+    #sidebar-actions button {
+      background: none;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: .78rem;
+      cursor: pointer;
+      line-height: 1.5;
+    }
+    #sidebar-actions button:hover { border-color: #58a6ff; color: #58a6ff; }
+    #sidebar-actions .close-btn:hover { border-color: #f85149; color: #f85149; }
+
+    /* ── Reader pane ──────────────────────────────────────── */
+    #reader-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 1.75rem 3rem;
+      font-size: .95rem;
+      line-height: 1.75;
+      color: #c9d1d9;
+    }
+    #reader-pane h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: .4rem;
+      line-height: 1.35;
+    }
+    #reader-pane .reader-meta {
+      font-size: .78rem;
+      color: #8b949e;
+      margin-bottom: 1.25rem;
+      padding-bottom: .75rem;
+      border-bottom: 1px solid #30363d;
+    }
+    #reader-pane p { margin-bottom: 1rem; }
+    #reader-loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .75rem; height: 100%;
+      color: #8b949e; font-size: .9rem;
+    }
+    #reader-error {
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .75rem; height: 100%;
+      color: #8b949e; text-align: center; padding: 2rem;
+    }
+    #reader-error i { font-size: 2.5rem; }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+    .card:hover { border-color: #58a6ff; }
+    .card.active { border-color: #f85149 !important; }
+    .card-title span { color: #58a6ff; font-weight: 600; font-size: .92rem; line-height: 1.35; }
+    .source-badge { font-size: .72rem; }
+    .meta-text { font-size: .78rem; color: #8b949e; }
+
+    /* ── Controls ─────────────────────────────────────────── */
+    #refresh-btn, #lang-select { transition: opacity .2s; }
+    #refresh-btn.loading { opacity: .5; pointer-events: none; }
+    .status-bar { background: #161b22; border-top: 1px solid #30363d; }
+    #lang-select {
+      background: #161b22; color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 6px;
+      padding: 3px 8px; font-size: .85rem; cursor: pointer;
+    }
+    #lang-select:focus { outline: none; border-color: #f85149; }
+
+    /* ── Spinner ──────────────────────────────────────────── */
+    .spinner-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(13,17,23,.7); z-index: 9999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 1rem;
+    }
+    .spinner-overlay.active { display: flex; }
+
+    [dir="rtl"] .card { text-align: right; }
+    [dir="rtl"] #sidebar { border-left: none; border-right: 2px solid #30363d; }
+  </style>
+</head>
+<body>
+
+<!-- Spinner overlay -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner-border text-danger" style="width:3rem;height:3rem;" role="status"></div>
+  <span class="text-light fs-6" id="spinner-msg">Loading…</span>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container-fluid px-3">
+    <span class="navbar-brand"><i class="bi bi-broadcast-pin me-2"></i>Iran War Monitor</span>
+    <div class="ms-auto d-flex align-items-center flex-wrap gap-2">
+      <span class="meta-text d-none d-md-inline">
+        <i class="bi bi-clock me-1"></i><span id="fetched-label">Updated:</span>
+        <strong id="fetched-at">—</strong>
+      </span>
+      <span class="badge bg-danger" id="total-badge">0 articles</span>
+      <select id="lang-select" title="Select language" onchange="onLangChange()">
+        {% for code, label in languages.items() %}
+        <option value="{{ code }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button id="refresh-btn" class="btn btn-sm btn-outline-danger" onclick="refreshFeed()">
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="refresh">Refresh</span>
+      </button>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="autoRefresh" onchange="toggleAuto()" />
+        <label class="form-check-label meta-text" for="autoRefresh" data-i18n="auto">Auto</label>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Search bar -->
+<div id="search-bar">
+  <input id="search" type="text" class="form-control bg-dark text-light border-secondary"
+         data-i18n-placeholder="search_placeholder"
+         placeholder="🔍  Filter articles…" oninput="filterArticles()" />
+</div>
+
+<!-- Split layout -->
+<div id="layout">
+
+  <!-- Left: feed -->
+  <div id="feed-panel">
+    <div class="row g-3" id="articles-grid"></div>
+  </div>
+
+  <!-- Right: reader sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <span id="sidebar-title">—</span>
+      <div id="sidebar-actions">
+        <button onclick="openExternal()" title="Open in new tab">
+          <i class="bi bi-box-arrow-up-right"></i>
+        </button>
+        <button class="close-btn" onclick="closeSidebar()" title="Close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <div id="reader-pane">
+      <div id="reader-loading">
+        <div class="spinner-border text-secondary" style="width:1.8rem;height:1.8rem;"></div>
+        <span>Loading article…</span>
+      </div>
+      <div id="reader-error">
+        <i class="bi bi-exclamation-circle text-secondary"></i>
+        <p class="mb-2" id="reader-error-msg">Could not load article.</p>
+        <button class="btn btn-sm btn-outline-primary" onclick="openExternal()">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in browser
+        </button>
+      </div>
+      <div id="reader-content" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Status bar -->
+<footer class="status-bar fixed-bottom py-1 px-3 d-flex justify-content-between align-items-center">
+  <span class="meta-text">
+    <i class="bi bi-shield-exclamation me-1 text-danger"></i>
+    Al Jazeera · BBC · Reuters · The Guardian · Times of Israel · Jerusalem Post
+  </span>
+  <span id="status-msg" class="meta-text"></span>
+</footer>
+
+<script>
+// ── i18n ────────────────────────────────────────────────────────────────────
+const I18N = {
+  en:    { refresh:"Refresh", auto:"Auto", search_placeholder:"🔍  Filter articles…", fetched:"Updated:", no_articles:"No articles found. Try refreshing.", loading:"Loading…", translating:"Translating…" },
+  de:    { refresh:"Aktualisieren", auto:"Auto", search_placeholder:"🔍  Artikel filtern…", fetched:"Aktualisiert:", no_articles:"Keine Artikel gefunden.", loading:"Laden…", translating:"Übersetze…" },
+  fr:    { refresh:"Actualiser", auto:"Auto", search_placeholder:"🔍  Filtrer les articles…", fetched:"Mis à jour :", no_articles:"Aucun article trouvé.", loading:"Chargement…", translating:"Traduction…" },
+  es:    { refresh:"Actualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artículos…", fetched:"Actualizado:", no_articles:"No se encontraron artículos.", loading:"Cargando…", translating:"Traduciendo…" },
+  ar:    { refresh:"تحديث", auto:"تلقائي", search_placeholder:"🔍  تصفية المقالات…", fetched:"آخر تحديث:", no_articles:"لم يتم العثور على مقالات.", loading:"جارٍ التحميل…", translating:"جارٍ الترجمة…" },
+  fa:    { refresh:"بارگذاری مجدد", auto:"خودکار", search_placeholder:"🔍  جستجو…", fetched:"بروزرسانی:", no_articles:"مقاله‌ای یافت نشد.", loading:"در حال بارگذاری…", translating:"در حال ترجمه…" },
+  ru:    { refresh:"Обновить", auto:"Авто", search_placeholder:"🔍  Фильтр статей…", fetched:"Обновлено:", no_articles:"Статьи не найдены.", loading:"Загрузка…", translating:"Перевод…" },
+  he:    { refresh:"רענן", auto:"אוטו", search_placeholder:"🔍  סנן מאמרים…", fetched:"עודכן:", no_articles:"לא נמצאו מאמרים.", loading:"טוען…", translating:"מתרגם…" },
+  "zh-CN":{ refresh:"刷新", auto:"自动", search_placeholder:"🔍  筛选文章…", fetched:"更新时间:", no_articles:"未找到文章。", loading:"加载中…", translating:"翻译中…" },
+  tr:    { refresh:"Yenile", auto:"Otomatik", search_placeholder:"🔍  Makaleleri filtrele…", fetched:"Güncellendi:", no_articles:"Makale bulunamadı.", loading:"Yükleniyor…", translating:"Çevriliyor…" },
+  uk:    { refresh:"Оновити", auto:"Авто", search_placeholder:"🔍  Фільтр статей…", fetched:"Оновлено:", no_articles:"Статті не знайдено.", loading:"Завантаження…", translating:"Переклад…" },
+  pt:    { refresh:"Atualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artigos…", fetched:"Atualizado:", no_articles:"Nenhum artigo encontrado.", loading:"Carregando…", translating:"Traduzindo…" },
+};
+const RTL_LANGS = new Set(["ar","fa","he"]);
+
+let currentLang = localStorage.getItem("lang") || "en";
+let autoTimer   = null;
+let currentUrl  = null;
+let activeCard  = null;
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function t(key) { return (I18N[currentLang] || I18N.en)[key] || key; }
+
+function applyI18n() {
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => el.placeholder = t(el.dataset.i18nPlaceholder));
+  document.getElementById("fetched-label").textContent = t("fetched");
+  document.getElementById("html-root").setAttribute("dir", RTL_LANGS.has(currentLang) ? "rtl" : "ltr");
+}
+function setStatus(msg) { document.getElementById("status-msg").textContent = msg; }
+function showSpinner(msg) { document.getElementById("spinner-msg").textContent = msg; document.getElementById("spinner").classList.add("active"); }
+function hideSpinner()    { document.getElementById("spinner").classList.remove("active"); }
+function escHtml(s) {
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+// ── Sidebar / Reader ─────────────────────────────────────────────────────────
+function openSidebar(url, title, cardEl) {
+  currentUrl = url;
+
+  if (activeCard) activeCard.classList.remove("active");
+  activeCard = cardEl;
+  if (activeCard) activeCard.classList.add("active");
+
+  document.getElementById("sidebar-title").textContent = title;
+  document.getElementById("sidebar").classList.add("open");
+
+  // Show loading state
+  document.getElementById("reader-loading").style.display = "flex";
+  document.getElementById("reader-error").style.display   = "none";
+  document.getElementById("reader-content").style.display = "none";
+
+  fetch(`/api/article-content?url=${encodeURIComponent(url)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { showReaderError(data.error); return; }
+      renderReader(data);
+    })
+    .catch(err => showReaderError(String(err)));
+}
+
+function renderReader(data) {
+  const pane = document.getElementById("reader-content");
+  const meta = [data.author, data.date].filter(Boolean).join(" · ");
+  const paragraphs = (data.text || "")
+    .split(/\n+/)
+    .filter(p => p.trim())
+    .map(p => `<p>${escHtml(p)}</p>`)
+    .join("");
+
+  pane.innerHTML = `
+    <h1>${escHtml(data.title || document.getElementById("sidebar-title").textContent)}</h1>
+    ${meta ? `<div class="reader-meta">${escHtml(meta)}</div>` : ""}
+    ${paragraphs || "<p><em>No article text could be extracted.</em></p>"}
+    <div class="mt-4 pt-2" style="border-top:1px solid #30363d;">
+      <button class="btn btn-sm btn-outline-secondary" onclick="openExternal()">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Read on original site
+      </button>
+    </div>`;
+
+  document.getElementById("reader-loading").style.display = "none";
+  document.getElementById("reader-content").style.display = "block";
+  pane.scrollTop = 0;
+}
+
+function showReaderError(msg) {
+  document.getElementById("reader-loading").style.display   = "none";
+  document.getElementById("reader-error-msg").textContent   = msg;
+  document.getElementById("reader-error").style.display     = "flex";
+}
+
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("reader-content").innerHTML = "";
+  if (activeCard) { activeCard.classList.remove("active"); activeCard = null; }
+  currentUrl = null;
+}
+
+function openExternal() {
+  if (currentUrl) window.open(currentUrl, "_blank", "noopener");
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSidebar(); });
+
+// ── Render articles ──────────────────────────────────────────────────────────
+let currentArticles = [];
+
+function renderArticles(articles) {
+  currentArticles = articles;
+  const grid = document.getElementById("articles-grid");
+  if (!articles.length) {
+    grid.innerHTML = `<div class="col-12 text-center py-5">
+      <i class="bi bi-newspaper display-4 text-secondary"></i>
+      <p class="mt-3 text-secondary">${t("no_articles")}</p></div>`;
+    return;
+  }
+  grid.innerHTML = articles.map((a, i) => `
+    <div class="col-12 col-md-6 col-xl-4 article-card">
+      <div class="card h-100" data-idx="${i}" onclick="openArticle(this)">
+        <div class="card-body d-flex flex-column gap-2">
+          <h6 class="card-title mb-0"><span>${escHtml(a.title)}</span></h6>
+          ${a.summary ? `<p class="card-text meta-text mb-0">${escHtml(a.summary)}…</p>` : ""}
+          <div class="mt-auto d-flex justify-content-between align-items-center flex-wrap gap-1">
+            <span class="badge bg-secondary source-badge">${escHtml(a.source)}</span>
+            <span class="meta-text"><i class="bi bi-calendar3 me-1"></i>${escHtml(a.pub_display)}</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function openArticle(cardEl) {
+  const a = currentArticles[parseInt(cardEl.dataset.idx, 10)];
+  if (a) openSidebar(a.link, a.title, cardEl);
+}
+
+// ── Data loading ─────────────────────────────────────────────────────────────
+function loadArticles(lang, spinMsg) {
+  showSpinner(spinMsg || t("loading"));
+  fetch(`/api/articles?lang=${encodeURIComponent(lang)}`)
+    .then(r => r.json())
+    .then(data => {
+      renderArticles(data.articles);
+      document.getElementById("total-badge").textContent = `${data.total} articles`;
+      document.getElementById("fetched-at").textContent =
+        new Date(data.fetched_at).toLocaleString(undefined, {timeZoneName:"short"});
+      setStatus("");
+    })
+    .catch(err => setStatus("⚠ " + err))
+    .finally(hideSpinner);
+}
+
+function onLangChange() {
+  currentLang = document.getElementById("lang-select").value;
+  localStorage.setItem("lang", currentLang);
+  applyI18n();
+  closeSidebar();
+  loadArticles(currentLang, t("translating"));
+}
+
+function refreshFeed() {
+  const btn = document.getElementById("refresh-btn");
+  btn.classList.add("loading");
+  setStatus("Fetching latest news…");
+  fetch(`/refresh?lang=${encodeURIComponent(currentLang)}`)
+    .then(r => r.json())
+    .then(() => loadArticles(currentLang, t("loading")))
+    .catch(() => setStatus("⚠ Refresh failed."))
+    .finally(() => btn.classList.remove("loading"));
+}
+
+function toggleAuto() {
+  clearInterval(autoTimer);
+  if (document.getElementById("autoRefresh").checked) {
+    autoTimer = setInterval(refreshFeed, 5 * 60 * 1000);
+    setStatus("Auto-refresh ON (every 5 min)");
+  } else {
+    setStatus("Auto-refresh OFF");
+  }
+}
+
+function filterArticles() {
+  const q = document.getElementById("search").value.toLowerCase();
+  document.querySelectorAll(".article-card").forEach(card => {
+    card.style.display = card.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+(function init() {
+  const sel = document.getElementById("lang-select");
+  sel.value = currentLang;
+  applyI18n();
+  loadArticles(currentLang);
+})();
+</script>
+</body>
+</html>
