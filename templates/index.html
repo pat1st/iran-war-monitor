@@ -6,6 +6,9 @@
   <title>Iran War – Latest News</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  {% if mon.adsense_client %}
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ mon.adsense_client }}" crossorigin="anonymous"></script>
+  {% endif %}
   <style>
     /* ── Base ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; }
@@ -159,6 +162,58 @@
 
     [dir="rtl"] .card { text-align: right; }
     [dir="rtl"] #sidebar { border-left: none; border-right: 2px solid #30363d; }
+
+    /* ── Ads & monetisation ───────────────────────────────── */
+    .ad-banner-wrap {
+      flex-shrink: 0;
+      background: #0d1117;
+      padding: .4rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid #21262d;
+      min-height: 0;
+    }
+    .ad-card {
+      background: #0d1117!important;
+      border: 1px dashed #30363d!important;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vpn-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      background: linear-gradient(90deg,#1a2035,#1a2d35);
+      border: 1px solid #1e4b6a;
+      border-radius: 8px;
+      padding: .55rem 1rem;
+      text-decoration: none;
+      color: #c9d1d9;
+      font-size: .83rem;
+      transition: border-color .2s;
+    }
+    .vpn-banner:hover { border-color: #58a6ff; color: #fff; }
+    .vpn-banner .vpn-cta {
+      background: #1f6feb;
+      color: #fff;
+      border-radius: 5px;
+      padding: 2px 10px;
+      font-size: .78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    /* ── Cookie consent ───────────────────────────────────── */
+    #cookie-banner {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      padding: .85rem 1.25rem; z-index: 9998; width: min(540px, 94vw);
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,.5);
+      font-size: .82rem;
+    }
+    #cookie-banner.hidden { display: none; }
   </style>
 </head>
 <body>
@@ -201,6 +256,28 @@
          data-i18n-placeholder="search_placeholder"
          placeholder="🔍  Filter articles…" oninput="filterArticles()" />
 </div>
+
+<!-- Leaderboard ad (shown only when AdSense is configured) -->
+{% if mon.adsense_client and mon.adsense_slot_banner %}
+<div class="ad-banner-wrap">
+  <ins class="adsbygoogle" style="display:block"
+       data-ad-client="{{ mon.adsense_client }}"
+       data-ad-slot="{{ mon.adsense_slot_banner }}"
+       data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+{% endif %}
+
+<!-- VPN affiliate banner -->
+{% if mon.vpn_affiliate_url %}
+<div class="ad-banner-wrap">
+  <a href="{{ mon.vpn_affiliate_url }}" target="_blank" rel="noopener sponsored" class="vpn-banner">
+    <i class="bi bi-shield-lock-fill text-info"></i>
+    <span>{{ mon.vpn_affiliate_label }}</span>
+    <span class="vpn-cta">Get Deal →</span>
+  </a>
+</div>
+{% endif %}
 
 <!-- Split layout -->
 <div id="layout">
@@ -245,12 +322,51 @@
 <footer class="status-bar fixed-bottom py-1 px-3 d-flex justify-content-between align-items-center">
   <span class="meta-text">
     <i class="bi bi-shield-exclamation me-1 text-danger"></i>
-    Al Jazeera · BBC · Reuters · The Guardian · Times of Israel · Jerusalem Post
+    Al Jazeera · BBC · Reuters · AP · Guardian · NY Times · Middle East Eye
   </span>
-  <span id="status-msg" class="meta-text"></span>
+  <span class="d-flex align-items-center gap-3">
+    {% if mon.bmac_username %}
+    <a href="https://buymeacoffee.com/{{ mon.bmac_username }}" target="_blank" rel="noopener"
+       class="meta-text text-decoration-none" style="color:#FFDD00;">
+      <i class="bi bi-cup-hot-fill me-1"></i>Buy me a coffee
+    </a>
+    {% endif %}
+    <a href="/privacy" target="_blank" class="meta-text text-decoration-none">Privacy</a>
+    <span id="status-msg" class="meta-text"></span>
+  </span>
 </footer>
 
+<!-- Cookie consent -->
+<div id="cookie-banner" {% if false %}class="hidden"{% endif %}>
+  <span class="flex-grow-1 text-secondary">
+    🍪 We use cookies and analytics to improve your experience.
+    <a href="/privacy" class="text-info">Privacy Policy</a>
+  </span>
+  <button class="btn btn-sm btn-outline-secondary" onclick="acceptCookies()">Accept</button>
+  <button class="btn btn-sm btn-outline-danger" onclick="declineCookies()">Decline</button>
+</div>
+
 <script>
+// ── Cookie consent ───────────────────────────────────────────────────────────
+(function checkCookie() {
+  if (localStorage.getItem("cookieConsent")) {
+    document.getElementById("cookie-banner").classList.add("hidden");
+  }
+})();
+function acceptCookies() {
+  localStorage.setItem("cookieConsent", "accepted");
+  document.getElementById("cookie-banner").classList.add("hidden");
+}
+function declineCookies() {
+  localStorage.setItem("cookieConsent", "declined");
+  document.getElementById("cookie-banner").classList.add("hidden");
+}
+
+// ── In-feed AdSense config (injected from server) ────────────────────────────
+const ADSENSE_CLIENT = "{{ mon.adsense_client }}";
+const ADSENSE_SLOT_INFEED = "{{ mon.adsense_slot_infeed }}";
+const AD_EVERY_N = 8; // insert an ad card every N real articles
+
 // ── i18n ────────────────────────────────────────────────────────────────────
 const I18N = {
   en:    { refresh:"Refresh", auto:"Auto", search_placeholder:"🔍  Filter articles…", fetched:"Updated:", no_articles:"No articles found. Try refreshing.", loading:"Loading…", translating:"Translating…" },
@@ -360,6 +476,23 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeSidebar
 // ── Render articles ──────────────────────────────────────────────────────────
 let currentArticles = [];
 
+function makeAdCard() {
+  if (!ADSENSE_CLIENT || !ADSENSE_SLOT_INFEED) return "";
+  const id = "ad-" + Math.random().toString(36).slice(2);
+  // Push after DOM insertion via setTimeout
+  setTimeout(() => {
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(_) {}
+  }, 100);
+  return `<div class="col-12 col-md-6 col-xl-4">
+    <div class="card ad-card h-100">
+      <ins id="${id}" class="adsbygoogle" style="display:block;width:100%;min-height:120px;"
+           data-ad-client="${ADSENSE_CLIENT}"
+           data-ad-slot="${ADSENSE_SLOT_INFEED}"
+           data-ad-format="auto"></ins>
+    </div>
+  </div>`;
+}
+
 function renderArticles(articles) {
   currentArticles = articles;
   const grid = document.getElementById("articles-grid");
@@ -369,7 +502,9 @@ function renderArticles(articles) {
       <p class="mt-3 text-secondary">${t("no_articles")}</p></div>`;
     return;
   }
-  grid.innerHTML = articles.map((a, i) => `
+  grid.innerHTML = articles.map((a, i) => {
+    const adCard = (i > 0 && i % AD_EVERY_N === 0) ? makeAdCard() : "";
+    return adCard + `
     <div class="col-12 col-md-6 col-xl-4 article-card">
       <div class="card h-100" data-idx="${i}" onclick="openArticle(this)">
         <div class="card-body d-flex flex-column gap-2">
@@ -381,7 +516,8 @@ function renderArticles(articles) {
           </div>
         </div>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 function openArticle(cardEl) {

@@ -1,4 +1,5 @@
 import re
+import os
 import time
 import threading
 
@@ -10,6 +11,22 @@ from dateutil import parser as dateparser
 from deep_translator import GoogleTranslator
 
 app = Flask(__name__)
+
+# ---------------------------------------------------------------------------
+# Monetisation config  (set via environment variables on Render)
+# ---------------------------------------------------------------------------
+MONETISATION = {
+    # Google AdSense — set ADSENSE_CLIENT to your pub-XXXXXXXXXX ID
+    "adsense_client":   os.environ.get("ADSENSE_CLIENT", ""),
+    # AdSense ad-slot IDs (create these in your AdSense dashboard)
+    "adsense_slot_banner":  os.environ.get("ADSENSE_SLOT_BANNER", ""),
+    "adsense_slot_infeed":  os.environ.get("ADSENSE_SLOT_INFEED", ""),
+    # VPN affiliate link — sign up at nordvpn.com/affiliates or similar
+    "vpn_affiliate_url":    os.environ.get("VPN_AFFILIATE_URL", "https://nordvpn.com"),
+    "vpn_affiliate_label":  os.environ.get("VPN_AFFILIATE_LABEL", "Stay private — try NordVPN"),
+    # Buy Me a Coffee — your username at buymeacoffee.com
+    "bmac_username":        os.environ.get("BMAC_USERNAME", ""),
+}
 
 # ---------------------------------------------------------------------------
 # Supported languages  (code -> display label)
@@ -337,7 +354,12 @@ def apply_translation(articles: list[dict], lang: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 @app.route("/")
 def index():
-    return render_template("index.html", languages=LANGUAGES)
+    return render_template("index.html", languages=LANGUAGES, mon=MONETISATION)
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html", mon=MONETISATION)
 
 
 @app.route("/refresh")
