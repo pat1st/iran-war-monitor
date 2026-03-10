@@ -381,18 +381,18 @@ const AD_EVERY_N = 8; // insert an ad card every N real articles
 
 // ── i18n ────────────────────────────────────────────────────────────────────
 const I18N = {
-  en:    { refresh:"Refresh", auto:"Auto", search_placeholder:"🔍  Filter articles…", fetched:"Updated:", no_articles:"No articles found. Try refreshing.", loading:"Loading…", translating:"Translating…" },
-  de:    { refresh:"Aktualisieren", auto:"Auto", search_placeholder:"🔍  Artikel filtern…", fetched:"Aktualisiert:", no_articles:"Keine Artikel gefunden.", loading:"Laden…", translating:"Übersetze…" },
-  fr:    { refresh:"Actualiser", auto:"Auto", search_placeholder:"🔍  Filtrer les articles…", fetched:"Mis à jour :", no_articles:"Aucun article trouvé.", loading:"Chargement…", translating:"Traduction…" },
-  es:    { refresh:"Actualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artículos…", fetched:"Actualizado:", no_articles:"No se encontraron artículos.", loading:"Cargando…", translating:"Traduciendo…" },
-  ar:    { refresh:"تحديث", auto:"تلقائي", search_placeholder:"🔍  تصفية المقالات…", fetched:"آخر تحديث:", no_articles:"لم يتم العثور على مقالات.", loading:"جارٍ التحميل…", translating:"جارٍ الترجمة…" },
-  fa:    { refresh:"بارگذاری مجدد", auto:"خودکار", search_placeholder:"🔍  جستجو…", fetched:"بروزرسانی:", no_articles:"مقاله‌ای یافت نشد.", loading:"در حال بارگذاری…", translating:"در حال ترجمه…" },
-  ru:    { refresh:"Обновить", auto:"Авто", search_placeholder:"🔍  Фильтр статей…", fetched:"Обновлено:", no_articles:"Статьи не найдены.", loading:"Загрузка…", translating:"Перевод…" },
-  he:    { refresh:"רענן", auto:"אוטו", search_placeholder:"🔍  סנן מאמרים…", fetched:"עודכן:", no_articles:"לא נמצאו מאמרים.", loading:"טוען…", translating:"מתרגם…" },
-  "zh-CN":{ refresh:"刷新", auto:"自动", search_placeholder:"🔍  筛选文章…", fetched:"更新时间:", no_articles:"未找到文章。", loading:"加载中…", translating:"翻译中…" },
-  tr:    { refresh:"Yenile", auto:"Otomatik", search_placeholder:"🔍  Makaleleri filtrele…", fetched:"Güncellendi:", no_articles:"Makale bulunamadı.", loading:"Yükleniyor…", translating:"Çevriliyor…" },
-  uk:    { refresh:"Оновити", auto:"Авто", search_placeholder:"🔍  Фільтр статей…", fetched:"Оновлено:", no_articles:"Статті не знайдено.", loading:"Завантаження…", translating:"Переклад…" },
-  pt:    { refresh:"Atualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artigos…", fetched:"Atualizado:", no_articles:"Nenhum artigo encontrado.", loading:"Carregando…", translating:"Traduzindo…" },
+  en:    { refresh:"Refresh", auto:"Auto", search_placeholder:"🔍  Filter articles…", fetched:"Updated:", no_articles:"No articles found. Try refreshing.", loading:"Loading…" },
+  de:    { refresh:"Aktualisieren", auto:"Auto", search_placeholder:"🔍  Artikel filtern…", fetched:"Aktualisiert:", no_articles:"Keine Artikel gefunden.", loading:"Laden…" },
+  fr:    { refresh:"Actualiser", auto:"Auto", search_placeholder:"🔍  Filtrer les articles…", fetched:"Mis à jour :", no_articles:"Aucun article trouvé.", loading:"Chargement…" },
+  es:    { refresh:"Actualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artículos…", fetched:"Actualizado:", no_articles:"No se encontraron artículos.", loading:"Cargando…" },
+  ar:    { refresh:"تحديث", auto:"تلقائي", search_placeholder:"🔍  تصفية المقالات…", fetched:"آخر تحديث:", no_articles:"لم يتم العثور على مقالات.", loading:"جارٍ التحميل…" },
+  fa:    { refresh:"بارگذاری مجدد", auto:"خودکار", search_placeholder:"🔍  جستجو…", fetched:"بروزرسانی:", no_articles:"مقاله‌ای یافت نشد.", loading:"در حال بارگذاری…" },
+  ru:    { refresh:"Обновить", auto:"Авто", search_placeholder:"🔍  Фильтр статей…", fetched:"Обновлено:", no_articles:"Статьи не найдены.", loading:"Загрузка…" },
+  he:    { refresh:"רענן", auto:"אוטו", search_placeholder:"🔍  סנן מאמרים…", fetched:"עודכן:", no_articles:"לא נמצאו מאמרים.", loading:"טוען…" },
+  "zh-CN":{ refresh:"刷新", auto:"自动", search_placeholder:"🔍  筛选文章…", fetched:"更新时间:", no_articles:"未找到文章。", loading:"加载中…" },
+  tr:    { refresh:"Yenile", auto:"Otomatik", search_placeholder:"🔍  Makaleleri filtrele…", fetched:"Güncellendi:", no_articles:"Makale bulunamadı.", loading:"Yükleniyor…" },
+  uk:    { refresh:"Оновити", auto:"Авто", search_placeholder:"🔍  Фільтр статей…", fetched:"Оновлено:", no_articles:"Статті не знайдено.", loading:"Завантаження…" },
+  pt:    { refresh:"Atualizar", auto:"Auto", search_placeholder:"🔍  Filtrar artigos…", fetched:"Atualizado:", no_articles:"Nenhum artigo encontrado.", loading:"Carregando…" },
 };
 const RTL_LANGS = new Set(["ar","fa","he"]);
 
@@ -558,7 +558,7 @@ function onLangChange() {
   localStorage.setItem("lang", currentLang);
   applyI18n();
   closeSidebar();
-  loadArticles(currentLang, t("translating"));
+  loadArticles(currentLang, t("loading"));
 }
 
 function refreshFeed() {
