@@ -168,7 +168,7 @@ KEYWORDS_BY_LANG: dict[str, list[str]] = {
            "naher osten", "persischer golf", "atomstreit iran",
            "iran krieg", "iran angriff", "iran rakete", "iran drohne",
            "iran sanktion", "iran konflikt", "iranisch", "nahostkrieg",
-           "islamische republik", "mullahs", "iran abkommen"],
+           "islamische republik", "mullahs", "iran abkommen", "hormus"],
     "fr": ["iran", "téhéran", "khamenei", "gardiens de la révolution",
            "moyen-orient", "golfe persique", "nucléaire iranien",
            "guerre iran", "frappe iran", "drone iran"],
@@ -206,7 +206,7 @@ _cache: dict[str, dict] = {}
 _cache_order: list[str] = []          # tracks insertion order for LRU eviction
 _lock  = threading.Lock()
 CACHE_TTL   = 300   # seconds
-CACHE_MAX_LANGS = 4  # keep at most 4 languages in memory at once
+CACHE_MAX_LANGS = 3  # keep at most 4 languages in memory at once
 MAX_ARTICLES    = 60  # max articles stored per language
 
 # ---------------------------------------------------------------------------
