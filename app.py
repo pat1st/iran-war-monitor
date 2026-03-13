@@ -4,11 +4,12 @@ import time
 import threading
 
 import feedparser
-import trafilatura
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timezone
 from dateutil import parser as dateparser
-from deep_translator import GoogleTranslator
+
+# trafilatura and deep_translator are imported lazily (inside the functions
+# that use them) to avoid loading lxml and other heavy libs at startup.
 
 app = Flask(__name__)
 
@@ -199,17 +200,21 @@ KEYWORDS_BY_LANG: dict[str, list[str]] = {
 }
 
 # ---------------------------------------------------------------------------
-# Article cache — one entry per language  { lang -> {articles, fetched_at} }
+# Article cache — LRU, max 4 languages  { lang -> {articles, fetched_at} }
 # ---------------------------------------------------------------------------
 _cache: dict[str, dict] = {}
+_cache_order: list[str] = []          # tracks insertion order for LRU eviction
 _lock  = threading.Lock()
-CACHE_TTL = 300  # seconds
+CACHE_TTL   = 300   # seconds
+CACHE_MAX_LANGS = 4  # keep at most 4 languages in memory at once
+MAX_ARTICLES    = 60  # max articles stored per language
 
 # ---------------------------------------------------------------------------
 # Translation cache  { (lang, original_text) -> translated_text }
 # ---------------------------------------------------------------------------
 _trans_cache: dict[tuple, str] = {}
 _trans_lock = threading.Lock()
+TRANS_CACHE_MAX = 4000  # evict oldest entries beyond this count
 
 BATCH_SEP   = "\n||||\n"
 MAX_CHARS   = 4500
@@ -219,6 +224,8 @@ def translate_batch(texts: list[str], target_lang: str) -> list[str]:
     """Translate a list of strings efficiently using batched API calls."""
     if target_lang == "en" or not texts:
         return texts
+
+    from deep_translator import GoogleTranslator  # lazy import
 
     results = list(texts)
     to_translate: list[tuple[int, str]] = []
@@ -260,6 +267,11 @@ def translate_batch(texts: list[str], target_lang: str) -> list[str]:
             translated = GoogleTranslator(source="auto", target=target_lang).translate(batch_text)
             parts = translated.split("||||")
             with _trans_lock:
+                # Evict oldest entries if cache is too large
+                if len(_trans_cache) > TRANS_CACHE_MAX:
+                    evict = list(_trans_cache.keys())[:len(_trans_cache) - TRANS_CACHE_MAX + 200]
+                    for k in evict:
+                        del _trans_cache[k]
                 for (i, original), part in zip(chunk, parts):
                     clean = part.strip()
                     _trans_cache[(target_lang, original)] = clean
@@ -302,7 +314,7 @@ def fetch_articles(lang: str) -> list[dict]:
                     pub_iso, pub_display = "", "Unknown"
 
                 if matches_topic(title, summary, keywords):
-                    clean_summary = re.sub(r"<[^>]+>", "", summary).strip()[:300]
+                    clean_summary = re.sub(r"<[^>]+>", "", summary).strip()[:200]
                     articles.append({
                         "title":       title,
                         "summary":     clean_summary,
@@ -321,7 +333,7 @@ def fetch_articles(lang: str) -> list[dict]:
         if key not in seen:
             seen.add(key)
             unique.append(a)
-    return unique
+    return unique[:MAX_ARTICLES]
 
 
 def get_articles(lang: str = "en", force: bool = False):
@@ -332,6 +344,14 @@ def get_articles(lang: str = "en", force: bool = False):
             app.logger.info(f"Fetching fresh articles for lang={lang}…")
             entry = {"articles": fetch_articles(lang), "fetched_at": now}
             _cache[lang] = entry
+            # LRU: track order and evict oldest language if over limit
+            if lang in _cache_order:
+                _cache_order.remove(lang)
+            _cache_order.append(lang)
+            while len(_cache_order) > CACHE_MAX_LANGS:
+                evict_lang = _cache_order.pop(0)
+                _cache.pop(evict_lang, None)
+                app.logger.info(f"Evicted cache for lang={evict_lang}")
         return entry["articles"], datetime.fromtimestamp(entry["fetched_at"], tz=timezone.utc)
 
 
@@ -400,6 +420,7 @@ def article_content():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
     try:
+        import trafilatura  # lazy import — keeps lxml out of startup memory
         downloaded = trafilatura.fetch_url(url)
         if not downloaded:
             return jsonify({"error": "Could not fetch article"}), 502
